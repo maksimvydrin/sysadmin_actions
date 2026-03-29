@@ -7,18 +7,18 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import accuracy_score
 
 
-# ================================
+
 # 1. Загрузка данных
-# ================================
+
 
 logs = pd.read_csv("security_logs_dataset.csv", sep=";")
 
 print("Dataset size:", len(logs))
 
 
-# ================================
+
 # 2. Feature Engineering
-# ================================
+
 
 # частота событий
 event_freq = logs["message"].value_counts()
@@ -33,18 +33,18 @@ host_spread = logs.groupby("file")["host"].nunique()
 logs["host_spread"] = logs["file"].map(host_spread)
 
 
-# ================================
+
 # 3. TF-IDF
-# ================================
+
 
 vectorizer = TfidfVectorizer()
 
 X_text = vectorizer.fit_transform(logs["message"])
 
 
-# ================================
+
 # 4. Признаки
-# ================================
+
 
 X_features = logs[[
     "event_freq",
@@ -57,9 +57,9 @@ X_features = logs[[
 X = np.hstack((X_text.toarray(), X_features.values))
 
 
-# ================================
+
 # 5. Две ML модели
-# ================================
+
 
 # модель 1 — уровень угрозы
 y_threat = logs["threat_level"]
@@ -84,9 +84,9 @@ model_threat.fit(X_train, y1_train)
 model_root.fit(X_train, y2_train)
 
 
-# ================================
+
 # 6. Оценка моделей
-# ================================
+
 
 pred1 = model_threat.predict(X_test)
 pred2 = model_root.predict(X_test)
@@ -94,10 +94,7 @@ pred2 = model_root.predict(X_test)
 print("Threat accuracy:", accuracy_score(y1_test, pred1))
 print("Root cause accuracy:", accuracy_score(y2_test, pred2))
 
-
-# ================================
 # 7. Incident класс
-# ================================
 
 class Incident:
 
@@ -110,9 +107,9 @@ class Incident:
         self.message = message
 
 
-# ================================
+
 # 8. ML prediction
-# ================================
+
 
 def predict_incident(incident):
 
@@ -136,9 +133,9 @@ def predict_incident(incident):
     return threat, root
 
 
-# ================================
+
 # 9. Rule Engine (рекомендации)
-# ================================
+
 
 class Rule:
 
@@ -192,9 +189,9 @@ rules = [
 engine = RuleEngine(rules)
 
 
-# ================================
+
 # 10. Демонстрация
-# ================================
+
 
 incident = Incident(
     "auth-server",
