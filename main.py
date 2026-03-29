@@ -6,106 +6,143 @@ from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import accuracy_score
 
-# 1. Загрузка датасета
+
+# ================================
+# 1. Загрузка данных
+# ================================
 
 logs = pd.read_csv("security_logs_dataset.csv", sep=";")
 
 print("Dataset size:", len(logs))
 
+
+# ================================
 # 2. Feature Engineering
-
-severity_map = {"low":0,"medium":1,"high":2}
-
-logs["severity_num"] = logs["severity"].map(severity_map)
+# ================================
 
 # частота событий
-event_frequency = logs["message"].value_counts()
-logs["event_freq"] = logs["message"].map(event_frequency)
+event_freq = logs["message"].value_counts()
+logs["event_freq"] = logs["message"].map(event_freq)
 
 # активность пользователя
 user_activity = logs["user"].value_counts()
 logs["user_activity"] = logs["user"].map(user_activity)
 
-# распространение файла по системам
+# распространение файла
 host_spread = logs.groupby("file")["host"].nunique()
 logs["host_spread"] = logs["file"].map(host_spread)
 
-# 3. TF-IDF преобразование текста
+
+# ================================
+# 3. TF-IDF
+# ================================
 
 vectorizer = TfidfVectorizer()
 
 X_text = vectorizer.fit_transform(logs["message"])
 
-# 4. Дополнительные признаки
+
+# ================================
+# 4. Признаки
+# ================================
 
 X_features = logs[[
-    "severity_num",
     "event_freq",
     "user_activity",
-    "host_spread"
+    "host_spread",
+    "is_whitelisted",
+    "is_blacklisted"
 ]]
 
-# объединяем признаки
 X = np.hstack((X_text.toarray(), X_features.values))
 
-y = logs["verdict"]
 
-# 5. Обучение ML модели
+# ================================
+# 5. Две ML модели
+# ================================
 
-X_train, X_test, y_train, y_test = train_test_split(
-    X, y, test_size=0.2, random_state=42
+# модель 1 — уровень угрозы
+y_threat = logs["threat_level"]
+
+# модель 2 — причина
+y_root = logs["root_cause"]
+
+
+X_train, X_test, y1_train, y1_test = train_test_split(
+    X, y_threat, test_size=0.2, random_state=42
 )
 
-model = RandomForestClassifier()
+_, _, y2_train, y2_test = train_test_split(
+    X, y_root, test_size=0.2, random_state=42
+)
 
-model.fit(X_train, y_train)
 
-y_pred = model.predict(X_test)
+model_threat = RandomForestClassifier()
+model_root = RandomForestClassifier()
 
-accuracy = accuracy_score(y_test, y_pred)
+model_threat.fit(X_train, y1_train)
+model_root.fit(X_train, y2_train)
 
-print("ML accuracy:", accuracy)
 
-# 6. Класс Incident
+# ================================
+# 6. Оценка моделей
+# ================================
+
+pred1 = model_threat.predict(X_test)
+pred2 = model_root.predict(X_test)
+
+print("Threat accuracy:", accuracy_score(y1_test, pred1))
+print("Root cause accuracy:", accuracy_score(y2_test, pred2))
+
+
+# ================================
+# 7. Incident класс
+# ================================
 
 class Incident:
 
-    def __init__(self, timestamp, host, user, severity, process, file, message):
+    def __init__(self, host, user, process, file, message):
 
-        self.timestamp = timestamp
         self.host = host
         self.user = user
-        self.severity = severity
         self.process = process
         self.file = file
         self.message = message
 
-# 7. ML prediction функция
 
-def ml_predict(incident):
+# ================================
+# 8. ML prediction
+# ================================
+
+def predict_incident(incident):
 
     message_vec = vectorizer.transform([incident.message]).toarray()
 
-    severity_num = severity_map[incident.severity]
-
-    event_freq = event_frequency.get(incident.message, 1)
-
+    freq = event_freq.get(incident.message, 1)
     user_act = user_activity.get(incident.user, 1)
-
     spread = host_spread.get(incident.file, 1)
 
-    features = np.array([[severity_num, event_freq, user_act, spread]])
+    # whitelist / blacklist логика
+    is_white = 1 if incident.user in ["user", "service"] else 0
+    is_black = 1 if "payload" in incident.file or "failed" in incident.message else 0
+
+    features = np.array([[freq, user_act, spread, is_white, is_black]])
 
     X_input = np.hstack((message_vec, features))
 
-    return model.predict(X_input)[0]
+    threat = model_threat.predict(X_input)[0]
+    root = model_root.predict(X_input)[0]
 
-# 8. Rule Engine
+    return threat, root
+
+
+# ================================
+# 9. Rule Engine (рекомендации)
+# ================================
 
 class Rule:
 
     def __init__(self, name, condition, recommendation):
-
         self.name = name
         self.condition = condition
         self.recommendation = recommendation
@@ -114,75 +151,71 @@ class Rule:
 class RuleEngine:
 
     def __init__(self, rules):
-
         self.rules = rules
 
     def evaluate(self, incident):
 
-        recommendations = []
+        recs = []
 
         for rule in self.rules:
-
             if rule.condition(incident):
+                recs.append(rule.recommendation)
 
-                recommendations.append(rule.recommendation)
+        if not recs:
+            recs.append("Требуется анализ")
 
-        if not recommendations:
-            recommendations.append("Требуется дополнительный анализ")
+        return recs
 
-        return recommendations
 
-# 9. Правила системы
+# правила
 
-rule1 = Rule(
-    "Brute force attack",
-    lambda i: "failed login" in i.message,
-    "Проверить попытки входа и заблокировать IP"
-)
+rules = [
 
-rule2 = Rule(
-    "Privilege escalation",
-    lambda i: "sudo" in i.message,
-    "Проверить действия администратора"
-)
+    Rule(
+        "Brute force",
+        lambda i: "failed login" in i.message,
+        "Заблокировать IP и проверить попытки входа"
+    ),
 
-rule3 = Rule(
-    "Service activity",
-    lambda i: i.user == "service",
-    "Проверить корректность сервисного процесса"
-)
+    Rule(
+        "Malware",lambda i: "payload" in i.file,
+        "Изолировать хост и проверить систему"
+    ),
 
-rule4 = Rule(
-    "Malware spread",
-    lambda i: i.file == "payload.exe", "Проверить систему на наличие вредоносного ПО"
-)
+    Rule(
+        "Admin activity",
+        lambda i: "sudo" in i.message,
+        "Проверить действия администратора"
+    )
+]
 
-engine = RuleEngine([rule1, rule2, rule3, rule4])
+engine = RuleEngine(rules)
 
-# 10. Демонстрация работы
+
+# ================================
+# 10. Демонстрация
+# ================================
 
 incident = Incident(
-    "2026-02-17",
     "auth-server",
     "guest",
-    "high",
     "ssh",
     "auth.log",
     "failed login attempt"
 )
 
-ml_verdict = ml_predict(incident)
+threat, root = predict_incident(incident)
 
 recommendations = engine.evaluate(incident)
 
-print("\nIncident detected")
+print("\nIncident:")
 print("Host:", incident.host)
 print("User:", incident.user)
 print("Message:", incident.message)
 
-print("\nML verdict:", ml_verdict)
+print("\nThreat level:", threat)
+print("Root cause:", root)
 
 print("\nRecommendations:")
-
 for r in recommendations:
     print("-", r)
