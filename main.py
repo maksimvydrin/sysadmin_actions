@@ -10,7 +10,7 @@ from sklearn.metrics import accuracy_score
 
 logs = pd.read_csv("security_logs_dataset.csv", sep=";")
 
-print("Dataset size:", len(logs))
+#print("Dataset size:", len(logs))
 
 # 2. Feature Engineering
 
@@ -73,8 +73,8 @@ model_root.fit(X_train, y2_train)
 pred1 = model_threat.predict(X_test)
 pred2 = model_root.predict(X_test)
 
-print("Threat accuracy:", accuracy_score(y1_test, pred1))
-print("Root cause accuracy:", accuracy_score(y2_test, pred2))
+#print("Threat accuracy:", accuracy_score(y1_test, pred1))
+#print("Root cause accuracy:", accuracy_score(y2_test, pred2))
 
 # 7. Incident класс
 
@@ -164,28 +164,28 @@ rules = [
 
 engine = RuleEngine(rules)
 
-# 10. Демонстрация
+# # 10. Демонстрация
+#
+# incident = Incident(
+#     "auth-server",
+#     "guest",
+#     "ssh",
+#     "auth.log",
+#     "failed login attempt"
+# )
+#
+# threat, root = predict_incident(incident)
+#
+# recommendations = engine.evaluate(incident)
 
-incident = Incident(
-    "auth-server",
-    "guest",
-    "ssh",
-    "auth.log",
-    "failed login attempt"
-)
-
-threat, root = predict_incident(incident)
-
-recommendations = engine.evaluate(incident)
-
-print("\nIncident:")
-print("Host:", incident.host)
-print("User:", incident.user)
-print("Message:", incident.message)
-
-print("\nThreat level:", threat)
-print("Root cause:", root)
-
-print("\nRecommendations:")
-for r in recommendations:
-    print("-", r)
+# print("\nIncident:")
+# print("Host:", incident.host)
+# print("User:", incident.user)
+# print("Message:", incident.message)
+#
+# print("\nThreat level:", threat)
+# print("Root cause:", root)
+#
+# print("\nRecommendations:")
+# for r in recommendations:
+#     print("-", r)
