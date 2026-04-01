@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Результат</title>
+</head>
+<body>
+<h1>Результат анализа инцидента</h1>
+
+<h3>Инцидент:</h3>
+
+<p><b>Host:{{ incident.host }}</b></p>
+<p><b>User:{{ incident.user }}</b></p>
+<p><b>Message:{{ incident.message }}</b></p>
+
+<p><b>Threat level:{{ threat }}</b></p>
+<p><b>Root cause:{{ root }}</b></p>
+
+<ul>
+    {% for r in recommendation %}
+        <li>{{ r }}</li>
+    {% endfor %}
+</ul>
+
+<br>
+<a href="/"> Назад </a>
+
+</body>
+</html>
