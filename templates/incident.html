@@ -3,27 +3,40 @@
 <head>
     <meta charset="UTF-8">
     <title>Результат</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
-<h1>Результат анализа инцидента</h1>
 
-<h3>Инцидент:</h3>
+<div class="container">
 
-<p><b>Host:{{ incident.host }}</b></p>
-<p><b>User:{{ incident.user }}</b></p>
-<p><b>Message:{{ incident.message }}</b></p>
+    <h2>Результат анализа</h2>
 
-<p><b>Threat level:{{ threat }}</b></p>
-<p><b>Root cause:{{ root }}</b></p>
+    <div class="card">
+        <p><b>Host:</b> {{ incident.host }}</p>
+        <p><b>User:</b> {{ incident.user }}</p>
+        <p><b>Message:</b> {{ incident.message }}</p>
+    </div>
 
-<ul>
-    {% for r in recommendation %}
-        <li>{{ r }}</li>
-    {% endfor %}
-</ul>
+    <div class="card">
+        <p><b>Threat level:</b>
+            <span class="badge {{ threat|lower }}">{{ threat }}</span>
+        </p>
 
-<br>
-<a href="/"> Назад </a>
+        <p><b>Root cause:</b> {{ root }}</p>
+    </div>
+
+    <div class="card">
+        <h3>Рекомендации:</h3>
+        <ul>
+            {% for r in recommendation %}
+                <li>{{ r }}</li>
+            {% endfor %}
+        </ul>
+    </div>
+
+    <a href="/" class="back">← Назад</a>
+
+</div>
 
 </body>
 </html>

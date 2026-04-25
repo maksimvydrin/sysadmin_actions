@@ -2,25 +2,37 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Анализ</title>
+    <title>Анализ инцидента</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
 
-<h2>Анализ инцидента:</h2>
+<div class="container">
 
-<form action = "/predict" method = "post">
-  <label>Host:</label>
-  <input type="text" name = "host">
-  <label>User:</label>
-  <input type="text" name = "user">
-  <label>Process:</label>
-  <input type="text" name = "process">
-  <label>File:</label>
-  <input type="text" name = "file">
-  <label>Message:</label>
-  <input type="text" name = "message">
-  <button type = "submit">Отправить</button>
+    <h2>Анализ инцидента</h2>
 
+    <form action="/predict" method="post">
+
+        <label>Host</label>
+        <input type="text" name="host" required>
+
+        <label>User</label>
+        <input type="text" name="user" required>
+
+        <label>Process</label>
+        <input type="text" name="process">
+
+        <label>File</label>
+        <input type="text" name="file">
+
+        <label>Message</label>
+        <textarea name="message" required></textarea>
+
+        <button type="submit">Анализировать</button>
+
+    </form>
+
+</div>
 
 </body>
 </html>
