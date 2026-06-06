@@ -2,37 +2,147 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Анализ инцидента</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <title>Анализ инцидентов</title>
+    <!-- Bootstrap 5 (для стилей и модального окна) -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { background: #f4f6f9; padding-top: 50px; }
+        .card { border-radius: 15px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+        .btn-primary { background-color: #0d6efd; border: none; }
+        .btn-primary:hover { background-color: #0b5ed7; }
+    </style>
 </head>
 <body>
-
 <div class="container">
-
-    <h2>Анализ инцидента</h2>
-
-    <form action="/predict" method="post">
-
-        <label>Host</label>
-        <input type="text" name="host" required>
-
-        <label>User</label>
-        <input type="text" name="user" required>
-
-        <label>Process</label>
-        <input type="text" name="process">
-
-        <label>File</label>
-        <input type="text" name="file">
-
-        <label>Message</label>
-        <textarea name="message" required></textarea>
-
-        <button type="submit">Анализировать</button>
-
-    </form>
-
+    <div class="card">
+        <div class="card-header bg-dark text-white">
+            <h3 class="mb-0">🔍 Анализ безопасности</h3>
+        </div>
+        <div class="card-body">
+            <form action="/predict" method="post" id="mainForm">
+                <div class="mb-3">
+                    <label for="host" class="form-label">Хост</label>
+                    <input type="text" class="form-control" id="host" name="host" placeholder="Например: server01" required>
+                </div>
+                <div class="mb-3">
+                    <label for="user" class="form-label">Пользователь</label>
+                    <input type="text" class="form-control" id="user" name="user" placeholder="Например: john.doe" required>
+                </div>
+                <div class="mb-3">
+                    <label for="process" class="form-label">Процесс</label>
+                    <input type="text" class="form-control" id="process" name="process" placeholder="Например: sshd" required>
+                </div>
+                <div class="mb-3">
+                    <label for="file" class="form-label">Файл</label>
+                    <input type="text" class="form-control" id="file" name="file" placeholder="Например: /etc/passwd" required>
+                </div>
+                <div class="mb-3">
+                    <label for="message" class="form-label">Сообщение</label>
+                    <textarea class="form-control" id="message" name="message" rows="3" placeholder="Лог-сообщение..."></textarea>
+                </div>
+                <div class="d-flex justify-content-between">
+                    <button type="button" class="btn btn-secondary" data-bs-toggle="modal" data-bs-target="#datasetModal">
+                        📋 Выбрать из датасета
+                    </button>
+                    <button type="submit" class="btn btn-primary">🚀 Анализировать</button>
+                </div>
+            </form>
+        </div>
+    </div>
 </div>
 
+<!-- МОДАЛЬНОЕ ОКНО (всплывающее меню) -->
+<div class="modal fade" id="datasetModal" tabindex="-1" aria-labelledby="datasetModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="datasetModalLabel">Выбор параметров из датасета</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label for="selectUser" class="form-label">Пользователь</label>
+                    <select class="form-select" id="selectUser">
+                        <option value="">-- Выберите пользователя --</option>
+                        {% for user in users %}
+                            <option value="{{ user }}">{{ user }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label for="selectHost" class="form-label">Хост</label>
+                    <select class="form-select" id="selectHost">
+                        <option value="">-- Выберите хост --</option>
+                        {% for host in hosts %}
+                            <option value="{{ host }}">{{ host }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label for="selectProcess" class="form-label">Процесс</label>
+                    <select class="form-select" id="selectProcess">
+                        <option value="">-- Выберите процесс --</option>
+                        {% for proc in processes %}
+                            <option value="{{ proc }}">{{ proc }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label for="selectFile" class="form-label">Файл</label>
+                    <select class="form-select" id="selectFile">
+                        <option value="">-- Выберите файл --</option>
+                        {% for file in files %}
+                            <option value="{{ file }}">{{ file }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label for="selectMessage" class="form-label">Сообщение</label>
+                    <select class="form-select" id="selectMessage">
+                        <option value="">-- Выберите сообщение --</option>
+                        {% for msg in messages %}
+                            <option value="{{ msg }}">{{ msg[:80] }}{% if msg|length > 80 %}...{% endif %}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                <button type="button" class="btn btn-primary" id="applySelectionBtn">Применить и закрыть</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Bootstrap JS + Popper -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+    // Ждём загрузки страницы
+    document.addEventListener('DOMContentLoaded', function() {
+        const applyBtn = document.getElementById('applySelectionBtn');
+        const modalElement = document.getElementById('datasetModal');
+        const modal = new bootstrap.Modal(modalElement);
+        
+        applyBtn.addEventListener('click', function() {
+            // Получаем выбранные значения из модального окна
+            const selectedUser = document.getElementById('selectUser').value;
+            const selectedHost = document.getElementById('selectHost').value;
+            const selectedProcess = document.getElementById('selectProcess').value;
+            const selectedFile = document.getElementById('selectFile').value;
+            const selectedMessage = document.getElementById('selectMessage').value;
+            
+            // Заполняем поля основной формы
+            if (selectedUser) document.getElementById('user').value = selectedUser;
+            if (selectedHost) document.getElementById('host').value = selectedHost;
+            if (selectedProcess) document.getElementById('process').value = selectedProcess;
+            if (selectedFile) document.getElementById('file').value = selectedFile;
+            if (selectedMessage) document.getElementById('message').value = selectedMessage;
+            
+            // Закрываем модальное окно
+            modal.hide();
+        });
+    });
+</script>
 </body>
 </html>
