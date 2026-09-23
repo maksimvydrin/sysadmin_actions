@@ -135,7 +135,7 @@ class RuleEngine:
                 recs.append(rule.recommendation)
 
         if not recs:
-            recs.append("Требуется анализ")
+            recs.append("Analysis is required")
 
         return recs
 
@@ -147,18 +147,18 @@ rules = [
     Rule(
         "Brute force",
         lambda i: "failed login" in i.message,
-        "Заблокировать IP и проверить попытки входа"
+        "Block the IP address and check for login attempts"
     ),
 
     Rule(
         "Malware",lambda i: "payload" in i.file,
-        "Изолировать хост и проверить систему"
+        "Isolate the host and check the system."
     ),
 
     Rule(
         "Admin activity",
         lambda i: "sudo" in i.message,
-        "Проверить действия администратора"
+        "Check the administrator’s actions"
     )
 ]
 
