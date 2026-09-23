@@ -2,14 +2,14 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Результат</title>
+    <title>Result</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
 
 <div class="container">
 
-    <h2>Результат анализа</h2>
+    <h2>Analysis result</h2>
 
     <div class="card">
         <p><b>Host:</b> {{ incident.host }}</p>
@@ -26,9 +26,9 @@
     </div>
 
     <div class="card">
-        <h3>Рекомендации:</h3>
+        <h3>Recommendations:</h3>
         <ul>
-            {% for r in recommendation %}
+            {% for r in recs %}
                 <li>{{ r }}</li>
             {% endfor %}
         </ul>
