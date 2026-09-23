@@ -4,6 +4,7 @@ from main import Incident, predict_incident, engine
 
 app = Flask(__name__)
 
+
 # ---------- Функции для получения уникальных значений из датасета ----------
 def get_unique_values(column_name):
     try:
@@ -12,8 +13,9 @@ def get_unique_values(column_name):
         values = sorted(df[column_name].dropna().unique().tolist())
         return values
     except Exception as e:
-        print(f"Ошибка загрузки колонки {column_name}: {e}")
+        print(f"Column loading error {column_name}: {e}")
         return []
+
 
 # ---------- Маршруты ----------
 @app.route("/")
@@ -25,13 +27,14 @@ def index():
     files = get_unique_values("file")
     # Сообщения (message) обычно уникальны, но можно тоже загрузить
     messages = get_unique_values("message")
-    
+
     return render_template("forms.html",
                            users=users,
                            hosts=hosts,
                            processes=processes,
                            files=files,
                            messages=messages)
+
 
 @app.route("/predict", methods=["POST"])
 def predict():
@@ -41,16 +44,17 @@ def predict():
     process = request.form.get("process")
     file = request.form.get("file")
     message = request.form.get("message")
-    
+
     incident = Incident(host, user, process, file, message)
     threat, root = predict_incident(incident)
     recs = engine.evaluate(incident)
-    
+
     return render_template("incident.html",
                            threat=threat,
                            root=root,
                            recs=recs,
                            incident=incident)
+
 
 if __name__ == "__main__":
     app.run(debug=True)
