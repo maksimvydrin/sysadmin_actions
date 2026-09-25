@@ -5,7 +5,7 @@ from main import Incident, predict_incident, engine
 app = Flask(__name__)
 
 
-# ---------- Функции для получения уникальных значений из датасета ----------
+# Функции для получения уникальных значений из датасета
 def get_unique_values(column_name):
     try:
         df = pd.read_csv("security_logs_dataset.csv", sep=";")
@@ -17,7 +17,7 @@ def get_unique_values(column_name):
         return []
 
 
-# ---------- Маршруты ----------
+# Маршруты
 @app.route("/")
 def index():
     # Получаем все возможные варианты для каждого поля
